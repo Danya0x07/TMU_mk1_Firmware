@@ -91,22 +91,34 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
+  LL_SPI_Enable(SPI1);
+  LL_SPI_Enable(SPI2);
+
   // Таймер динамической индикации
-  LL_TIM_EnableCounter(TIM1);
   LL_TIM_EnableIT_UPDATE(TIM1);
+  LL_TIM_EnableCounter(TIM1);
+
+  // Таймер для яркости панели
+  LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH3);
+  LL_TIM_EnableCounter(TIM2);
 
   // Таймеры для отсчёта миллисекунд и микросекунд;
   LL_TIM_EnableCounter(TIM3);
   LL_TIM_EnableCounter(TIM4);
 
-  LL_SPI_Enable(SPI1);
-  LL_SPI_Enable(SPI2);
-
   P10_Clear();
+  P10_SetCursor(0, 0);
+  P10_WriteChar(0xFF);
+  Millis_Wait(1000);
+  P10_SetCursor(1, 0);
+  P10_WriteChar(0xFF);
+
+  Millis_Wait(5000);
   P10_SetCursor(0, 1);
-  LL_GPIO_SetOutputPin(LEDMX_OE_GPIO_Port, LEDMX_OE_Pin);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */

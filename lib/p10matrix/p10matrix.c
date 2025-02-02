@@ -20,6 +20,9 @@ void P10_SetCursor(unsigned x, unsigned y)
 void P10_WriteChar(char c)
 {
     videoMemory[0][4 * cursorX + cursorY] = c;
+    videoMemory[1][4 * cursorX + cursorY] = c;
+    videoMemory[2][4 * cursorX + cursorY] = c;
+    videoMemory[3][4 * cursorX + cursorY] = c;
 }
 
 void P10_WriteString(const char *s)

@@ -50,8 +50,11 @@ void MX_GPIO_Init(void)
   LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOB);
 
   /**/
-  LL_GPIO_ResetOutputPin(GPIOB, NRF_CSN_Pin|NRF_CE_Pin|LEDMX_OE_Pin|LEDMX_A_Pin
-                          |LEDMX_B_Pin|LEDMX_SCLK_Pin|LED_LINKSTART_Pin|LED_LINKFINISH_Pin);
+  LL_GPIO_SetOutputPin(GPIOB, NRF_CSN_Pin|LEDMX_SCLK_Pin);
+
+  /**/
+  LL_GPIO_ResetOutputPin(GPIOB, NRF_CE_Pin|LEDMX_A_Pin|LEDMX_B_Pin|LED_LINKSTART_Pin
+                          |LED_LINKFINISH_Pin);
 
   /**/
   GPIO_InitStruct.Pin = NRF_IRQ_Pin|BTN0_Pin|BTN1_Pin;
@@ -59,8 +62,8 @@ void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = NRF_CSN_Pin|NRF_CE_Pin|LEDMX_OE_Pin|LEDMX_A_Pin
-                          |LEDMX_B_Pin|LEDMX_SCLK_Pin|LED_LINKSTART_Pin|LED_LINKFINISH_Pin;
+  GPIO_InitStruct.Pin = NRF_CSN_Pin|NRF_CE_Pin|LEDMX_A_Pin|LEDMX_B_Pin
+                          |LEDMX_SCLK_Pin|LED_LINKSTART_Pin|LED_LINKFINISH_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
