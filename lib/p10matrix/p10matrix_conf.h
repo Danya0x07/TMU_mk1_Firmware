@@ -1,6 +1,7 @@
 #ifndef _INC_P10MATRIX_CONF_H
 #define _INC_P10MATRIX_CONF_H
 
-#include "main.h"
+#define P10_PANELS_X    1
+#define P10_PANELS_Y    1
 
 #endif // _INC_P10MATRIX_CONF_H

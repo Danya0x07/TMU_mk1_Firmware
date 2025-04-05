@@ -55,7 +55,27 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+const uint8_t symbol[6 * 1] = {
+    0b00110000,
+    0b01111000,
+    0b11111100,
+    0b11111100,
+    0b01111000,
+    0b00110000,
+};
 
+const struct P10_Image image = {.n = 6, .m = 6, .data = &symbol[0]};
+
+const uint8_t symbol2[6 * 2] = {
+    0b11111111,0b11111110,
+    0b10000011,0b11110010,
+    0b10000100,0b00000010,
+    0b10101000,0b00000010,
+    0b10010000,0b00000010,
+    0b11111111,0b11111110,
+};
+
+const struct P10_Image image2 = {.n = 15, .m = 6, .data = &symbol2[0]};
 /* USER CODE END 0 */
 
 /**
@@ -110,20 +130,13 @@ int main(void)
   LL_TIM_EnableCounter(TIM4);
 
   P10_Clear();
-  P10_SetCursor(0, 0);
-  P10_WriteChar(0xFF);
   Millis_Wait(1000);
-  P10_SetCursor(1, 0);
-  P10_WriteChar(0xFF);
 
-  Millis_Wait(5000);
-  P10_SetCursor(0, 1);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  char i = 0;
   while (1)
   {
     /* USER CODE END WHILE */
@@ -133,7 +146,27 @@ int main(void)
     HAL_Delay(500);
     LL_GPIO_ResetOutputPin(LED_LINKSTART_GPIO_Port, LED_LINKSTART_Pin);
     HAL_Delay(500);
-    P10_WriteChar(i++);
+
+    for (int j = 0; j <= 10; j++) {
+        for (int i = 0; i <= 10; i++) {
+            P10_Clear();
+            P10_DrawImage(&image, j, i);
+            Millis_Wait(400);
+        }
+    }
+
+    LL_GPIO_SetOutputPin(LED_LINKSTART_GPIO_Port, LED_LINKSTART_Pin);
+    HAL_Delay(500);
+    LL_GPIO_ResetOutputPin(LED_LINKSTART_GPIO_Port, LED_LINKSTART_Pin);
+    HAL_Delay(500);
+
+    for (int j = 0; j <= 10; j++) {
+        for (int i = 0; i <= 10; i++) {
+            P10_Clear();
+            P10_DrawImage(&image2, j, i);
+            Millis_Wait(400);
+        }
+    }
   }
   /* USER CODE END 3 */
 }

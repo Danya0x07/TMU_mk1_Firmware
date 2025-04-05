@@ -1,40 +1,119 @@
 #include "p10matrix.h"
 #include "p10matrix_port.h"
-#include "string.h"
+#include <string.h>
 
-static volatile uint8_t videoMemory[4][16];
-static volatile uint_fast8_t scanCounter;
-static volatile uint_fast8_t cursorX, cursorY;
+#define PANEL_DOTS_X  32
+#define PANEL_DOTS_Y  16
+
+#define PANEL_STRIPS_X  (PANEL_DOTS_X / 8)
+#define PANEL_STRIPS_Y  (PANEL_DOTS_Y)
+
+#define STRIPS_X    (PANEL_STRIPS_X * P10_PANELS_X)
+#define STRIPS_Y    (PANEL_STRIPS_Y * P10_PANELS_Y)
+
+#define BYTES_X   (STRIPS_X)
+#define BYTES_Y   (STRIPS_Y / 4)
+
+#define FRAME_MEM_SIZE  (BYTES_X * BYTES_Y)
+
+static uint8_t videoMemory[4][FRAME_MEM_SIZE];
 
 void P10_Clear(void)
 {
     memset((uint8_t *)videoMemory, 0, sizeof(videoMemory));
 }
 
-void P10_SetCursor(unsigned x, unsigned y)
+static void WriteByte(int stripX, int stripY, uint8_t data)
 {
-    cursorX = x;
-    cursorY = y;
+    IRQ_OFF();
+
+    int row = stripY / PANEL_STRIPS_Y;
+    int pos = stripY & (PANEL_STRIPS_Y - 1);
+    unsigned coordinate = 4 * stripX + 4 * STRIPS_X * row + (PANEL_STRIPS_Y - 1 - pos) / 4;
+
+    if (coordinate >= FRAME_MEM_SIZE)
+        return;
+
+    videoMemory[stripY & 3][FRAME_MEM_SIZE - 1 - coordinate] = data;
+
+    IRQ_ON();
 }
 
-void P10_WriteChar(char c)
+static uint8_t ReadByte(int stripX, int stripY)
 {
-    videoMemory[0][4 * cursorX + cursorY] = c;
-    videoMemory[1][4 * cursorX + cursorY] = c;
-    videoMemory[2][4 * cursorX + cursorY] = c;
-    videoMemory[3][4 * cursorX + cursorY] = c;
+    int row = stripY / PANEL_STRIPS_Y;
+    int pos = stripY & (PANEL_STRIPS_Y - 1);
+    unsigned coordinate = 4 * stripX + 4 * STRIPS_X * row + (PANEL_STRIPS_Y - 1 - pos) / 4;
+
+    if (coordinate >= FRAME_MEM_SIZE)
+        return 0;
+
+    return videoMemory[stripY & 3][FRAME_MEM_SIZE - 1 - coordinate];
 }
 
-void P10_WriteString(const char *s)
+static inline uint8_t ReadByteOfImageData(const uint8_t *data, unsigned nBytesX, unsigned byteY, unsigned byteX)
 {
-    while (*s)
-        P10_WriteChar(*s++);
+    if (byteX >= nBytesX)
+        return 0;
+    return data[nBytesX * byteY + byteX];
+}
+
+static uint8_t ComputeMask(int nDots, int startStripX, int stripX, int endStripX, int xShift)
+{
+    uint8_t startMask = 0xFF >> xShift;
+    uint8_t midMask = 0xFF;
+    uint8_t endMask = 0xFF << (8 - (nDots - (8 - xShift) - 8 * (endStripX - startStripX - 1)));
+
+    uint8_t mask = midMask;
+
+    if (stripX == startStripX)
+        mask &= startMask;
+    if (stripX == endStripX)
+        mask &= endMask;
+
+    return mask;
+}
+
+static uint8_t GetImagePart(const struct P10_Image *img,
+                            int startStripX, int stripX, int endStripX,
+                            int xShift, int startStripY, int stripY)
+{
+    uint_fast8_t byteY = stripY - startStripY;
+    uint_fast8_t nBytesX = (img->n - 1) / 8 + 1;
+    uint_fast8_t byteX = stripX - startStripX;
+    uint8_t rByte = ReadByteOfImageData(img->data, nBytesX, byteY, byteX) >> xShift;
+    uint8_t lByte = ReadByteOfImageData(img->data, nBytesX, byteY, byteX - 1) << (8 - xShift);
+
+    return lByte | rByte;
+}
+
+void P10_DrawImage(const struct P10_Image *img, int dotX, int dotY)
+{
+    int startStripX = dotX / 8;
+    int endStripX = (dotX + img->n) / 8;
+    int xShift = dotX & 7;
+    int startStripY = dotY;
+    int endStripY = dotY + img->m - 1;
+
+    for (int stripX = startStripX; stripX <= endStripX; stripX++) {
+        uint8_t mask = ComputeMask(img->n, startStripX, stripX, endStripX, xShift);
+
+        for (int stripY = startStripY; stripY <= endStripY; stripY++) {
+            uint8_t imgData = GetImagePart(img, startStripX, stripX, endStripX, xShift, startStripY, stripY);
+            uint8_t oldData = ReadByte(stripX, stripY);
+            uint8_t newData = (oldData & ~mask) | (imgData & mask);
+
+            WriteByte(stripX, stripY, newData);
+        }
+    }
 }
 
 void P10_Callback(void)
 {
+    static unsigned scanCounter;
+
     SCLK_LOW();
-    ShiftOutBytes((uint8_t *)&videoMemory[scanCounter][0], sizeof(videoMemory) >> 2);
+    ShiftOutBytes((uint8_t *)&videoMemory[scanCounter][0], FRAME_MEM_SIZE);
     SCLK_HIGH();
 
     SetScanStep(scanCounter++);
