@@ -24,7 +24,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "p10matrix.h"
+#include "p10txt.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -151,7 +151,7 @@ int main(void)
         for (int i = 0; i <= 10; i++) {
             P10_Clear();
             P10_DrawImage(&image, j, i);
-            Millis_Wait(400);
+            Millis_Wait(100);
         }
     }
 
@@ -164,9 +164,21 @@ int main(void)
         for (int i = 0; i <= 10; i++) {
             P10_Clear();
             P10_DrawImage(&image2, j, i);
-            Millis_Wait(400);
+            Millis_Wait(100);
         }
     }
+
+    LL_GPIO_SetOutputPin(LED_LINKSTART_GPIO_Port, LED_LINKSTART_Pin);
+    HAL_Delay(500);
+    LL_GPIO_ResetOutputPin(LED_LINKSTART_GPIO_Port, LED_LINKSTART_Pin);
+    HAL_Delay(500);
+
+    P10_Clear();
+    P10_SetCursor(0, 0);
+    P10_PrintString_5x7("Hi");
+    P10_SetCursor(1, 0);
+    P10_PrintString_5x7("123");
+    Millis_Wait(3000);
   }
   /* USER CODE END 3 */
 }

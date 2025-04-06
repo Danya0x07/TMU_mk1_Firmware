@@ -2,17 +2,8 @@
 #include "p10matrix_port.h"
 #include <string.h>
 
-#define PANEL_DOTS_X  32
-#define PANEL_DOTS_Y  16
-
-#define PANEL_STRIPS_X  (PANEL_DOTS_X / 8)
-#define PANEL_STRIPS_Y  (PANEL_DOTS_Y)
-
-#define STRIPS_X    (PANEL_STRIPS_X * P10_PANELS_X)
-#define STRIPS_Y    (PANEL_STRIPS_Y * P10_PANELS_Y)
-
-#define BYTES_X   (STRIPS_X)
-#define BYTES_Y   (STRIPS_Y / 4)
+#define BYTES_X   (P10_STRIPS_X)
+#define BYTES_Y   (P10_STRIPS_Y / 4)
 
 #define FRAME_MEM_SIZE  (BYTES_X * BYTES_Y)
 
@@ -27,9 +18,9 @@ static void WriteByte(int stripX, int stripY, uint8_t data)
 {
     IRQ_OFF();
 
-    int row = stripY / PANEL_STRIPS_Y;
-    int pos = stripY & (PANEL_STRIPS_Y - 1);
-    unsigned coordinate = 4 * stripX + 4 * STRIPS_X * row + (PANEL_STRIPS_Y - 1 - pos) / 4;
+    int row = stripY / P10_PANEL_STRIPS_Y;
+    int pos = stripY & (P10_PANEL_STRIPS_Y - 1);
+    unsigned coordinate = 4 * stripX + 4 * P10_STRIPS_X * row + (P10_PANEL_STRIPS_Y - 1 - pos) / 4;
 
     if (coordinate >= FRAME_MEM_SIZE)
         return;
@@ -41,9 +32,9 @@ static void WriteByte(int stripX, int stripY, uint8_t data)
 
 static uint8_t ReadByte(int stripX, int stripY)
 {
-    int row = stripY / PANEL_STRIPS_Y;
-    int pos = stripY & (PANEL_STRIPS_Y - 1);
-    unsigned coordinate = 4 * stripX + 4 * STRIPS_X * row + (PANEL_STRIPS_Y - 1 - pos) / 4;
+    int row = stripY / P10_PANEL_STRIPS_Y;
+    int pos = stripY & (P10_PANEL_STRIPS_Y - 1);
+    unsigned coordinate = 4 * stripX + 4 * P10_STRIPS_X * row + (P10_PANEL_STRIPS_Y - 1 - pos) / 4;
 
     if (coordinate >= FRAME_MEM_SIZE)
         return 0;
