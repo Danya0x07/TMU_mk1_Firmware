@@ -24,7 +24,12 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "p10txt.h"
+#include "timer.h"
+#include "led.h"
+#include "display.h"
+#include "button.h"
+
+#include <sheduler.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,27 +60,17 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-const uint8_t symbol[6 * 1] = {
-    0b00110000,
-    0b01111000,
-    0b11111100,
-    0b11111100,
-    0b01111000,
-    0b00110000,
+static void UpdateTime(void)
+{
+    unsigned min, sec, ms;
+    Timer_GetTime(&min, &sec, &ms);
+    Display_UpdateTime(min, sec, ms);
+}
+
+static struct ShedulerTask *const shedulerTasks[] = {
+    &(struct ShedulerTask){.execute = UpdateTime, .period = 25, .enabled = true},
+    NULL
 };
-
-const struct P10_Image image = {.n = 6, .m = 6, .data = &symbol[0]};
-
-const uint8_t symbol2[6 * 2] = {
-    0b11111111,0b11111110,
-    0b10000011,0b11110010,
-    0b10000100,0b00000010,
-    0b10101000,0b00000010,
-    0b10010000,0b00000010,
-    0b11111111,0b11111110,
-};
-
-const struct P10_Image image2 = {.n = 15, .m = 6, .data = &symbol2[0]};
 /* USER CODE END 0 */
 
 /**
@@ -113,7 +108,6 @@ int main(void)
   MX_TIM4_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-
   LL_SPI_Enable(SPI1);
   LL_SPI_Enable(SPI2);
 
@@ -125,13 +119,17 @@ int main(void)
   LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH3);
   LL_TIM_EnableCounter(TIM2);
 
-  // Таймеры для отсчёта миллисекунд и микросекунд;
-  LL_TIM_EnableCounter(TIM3);
+  // Таймер для отсчёта микросекунд;
   LL_TIM_EnableCounter(TIM4);
 
-  P10_Clear();
-  Millis_Wait(1000);
+  // Миллисекундный таймер заезда
+  LL_TIM_EnableIT_UPDATE(TIM3);
 
+  Led_BlinkAlternate(3, 300);
+  Display_ShowSplashScreen();
+  Display_DrawTimeFrame();
+  Timer_Reset();
+  Button_Reset();
 
   /* USER CODE END 2 */
 
@@ -139,46 +137,25 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+      Sheduler_SpinRegular(shedulerTasks);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    LL_GPIO_SetOutputPin(LED_LINKSTART_GPIO_Port, LED_LINKSTART_Pin);
-    HAL_Delay(500);
-    LL_GPIO_ResetOutputPin(LED_LINKSTART_GPIO_Port, LED_LINKSTART_Pin);
-    HAL_Delay(500);
+    if (Button_IsUpdateFlagSet()) {
+        HAL_Delay(5); // debounce
+        Button_ReadState();
 
-    for (int j = 0; j <= 10; j++) {
-        for (int i = 0; i <= 10; i++) {
-            P10_Clear();
-            P10_DrawImage(&image, j, i);
-            Millis_Wait(100);
+        if (Button_HasBeenPressed(BTN_START)) {
+            Timer_Start();
         }
-    }
-
-    LL_GPIO_SetOutputPin(LED_LINKSTART_GPIO_Port, LED_LINKSTART_Pin);
-    HAL_Delay(500);
-    LL_GPIO_ResetOutputPin(LED_LINKSTART_GPIO_Port, LED_LINKSTART_Pin);
-    HAL_Delay(500);
-
-    for (int j = 0; j <= 10; j++) {
-        for (int i = 0; i <= 10; i++) {
-            P10_Clear();
-            P10_DrawImage(&image2, j, i);
-            Millis_Wait(100);
+        else if (Button_HasBeenPressed(BTN_STOP)) {
+            if (Timer_GetState() == TimerState_RUN)
+                Timer_Stop();
+            else
+                Timer_Reset();
         }
+        Button_ClearUpdateFlag();
     }
-
-    LL_GPIO_SetOutputPin(LED_LINKSTART_GPIO_Port, LED_LINKSTART_Pin);
-    HAL_Delay(500);
-    LL_GPIO_ResetOutputPin(LED_LINKSTART_GPIO_Port, LED_LINKSTART_Pin);
-    HAL_Delay(500);
-
-    P10_Clear();
-    P10_SetCursor(0, 0);
-    P10_PrintString_5x7("Hi");
-    P10_SetCursor(1, 0);
-    P10_PrintString_5x7("123");
-    Millis_Wait(3000);
   }
   /* USER CODE END 3 */
 }

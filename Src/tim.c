@@ -123,12 +123,16 @@ void MX_TIM3_Init(void)
   /* Peripheral clock enable */
   LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM3);
 
+  /* TIM3 interrupt Init */
+  NVIC_SetPriority(TIM3_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
+  NVIC_EnableIRQ(TIM3_IRQn);
+
   /* USER CODE BEGIN TIM3_Init 1 */
 
   /* USER CODE END TIM3_Init 1 */
   TIM_InitStruct.Prescaler = 15999;
   TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-  TIM_InitStruct.Autoreload = 65535;
+  TIM_InitStruct.Autoreload = 999;
   TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
   LL_TIM_Init(TIM3, &TIM_InitStruct);
   LL_TIM_DisableARRPreload(TIM3);
@@ -172,13 +176,6 @@ void MX_TIM4_Init(void)
 }
 
 /* USER CODE BEGIN 1 */
-void Millis_Wait(uint32_t ms)
-{
-    LL_TIM_SetCounter(TIM3, 0);
-    while (LL_TIM_GetCounter(TIM3) < ms)
-        ;
-}
-
 void Micros_Wait(uint32_t us)
 {
     LL_TIM_SetCounter(TIM4, 0);

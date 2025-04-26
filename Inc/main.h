@@ -83,10 +83,12 @@ void Error_Handler(void);
 #define LEDMX_B_GPIO_Port GPIOB
 #define LEDMX_SCLK_Pin LL_GPIO_PIN_14
 #define LEDMX_SCLK_GPIO_Port GPIOB
-#define BTN0_Pin LL_GPIO_PIN_8
-#define BTN0_GPIO_Port GPIOA
-#define BTN1_Pin LL_GPIO_PIN_9
-#define BTN1_GPIO_Port GPIOA
+#define BTN_START_Pin LL_GPIO_PIN_8
+#define BTN_START_GPIO_Port GPIOA
+#define BTN_START_EXTI_IRQn EXTI9_5_IRQn
+#define BTN_STOP_Pin LL_GPIO_PIN_9
+#define BTN_STOP_GPIO_Port GPIOA
+#define BTN_STOP_EXTI_IRQn EXTI9_5_IRQn
 #define LED_LINKSTART_Pin LL_GPIO_PIN_6
 #define LED_LINKSTART_GPIO_Port GPIOB
 #define LED_LINKFINISH_Pin LL_GPIO_PIN_7

@@ -84,7 +84,7 @@ static inline void _spi_transfer_bytes(uint8_t *in, const uint8_t *out,
 }
 
 /** Функция миллисекундной задержки. */
-#define _delay_ms(ms)   Millis_Wait((ms))
+#define _delay_ms(ms)   HAL_Delay((ms))
 
 /**
  * Функция микросекундной задержки.
