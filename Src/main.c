@@ -142,6 +142,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     if (Button_IsUpdateFlagSet()) {
+        BUTTON_IRQ_OFF();
         HAL_Delay(5); // debounce
         Button_ReadState();
 
@@ -155,6 +156,7 @@ int main(void)
                 Timer_Reset();
         }
         Button_ClearUpdateFlag();
+        BUTTON_IRQ_ON();
     }
   }
   /* USER CODE END 3 */

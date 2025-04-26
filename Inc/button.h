@@ -7,6 +7,9 @@
 #define BTN_START   GPIO_PIN_8
 #define BTN_STOP    GPIO_PIN_9
 
+#define BUTTON_IRQ_ON()     NVIC_EnableIRQ(EXTI9_5_IRQn)
+#define BUTTON_IRQ_OFF()    NVIC_DisableIRQ(EXTI9_5_IRQn)
+
 void Button_Reset(void);
 void Button_ReadState(void);
 bool Button_IsPressed(uint32_t btn);

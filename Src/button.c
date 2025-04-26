@@ -3,7 +3,7 @@
 #define BTN_MASK    (BTN_START | BTN_STOP)
 
 static uint32_t prevState, state, pressed, released;
-static volatile bool updateFlag;
+static bool updateFlag;
 
 void Button_Reset(void)
 {
