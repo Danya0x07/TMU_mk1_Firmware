@@ -224,7 +224,7 @@ void EXTI9_5_IRQHandler(void)
     /* USER CODE END LL_EXTI_LINE_9 */
   }
   /* USER CODE BEGIN EXTI9_5_IRQn 1 */
-
+    BUTTON_IRQ_OFF();
   /* USER CODE END EXTI9_5_IRQn 1 */
 }
 

@@ -142,7 +142,6 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     if (Button_IsUpdateFlagSet()) {
-        BUTTON_IRQ_OFF();
         HAL_Delay(5); // debounce
         Button_ReadState();
 
