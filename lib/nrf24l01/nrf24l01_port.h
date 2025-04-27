@@ -17,6 +17,7 @@
  * Здесь может быть подключение пользовательских заголовочных файлов
  */
 #include "main.h"
+#include "tim.h"
 
 /**
  * @name    Макросы для управления выводами трансивера.
@@ -73,13 +74,13 @@ static inline void _spi_transfer_bytes(uint8_t *in, const uint8_t *out,
 {
     if (in == NULL) {
         while (len--)
-            spi_transfer_byte(*out++);
+            _spi_transfer_byte(*out++);
     } else if (out == NULL) {
         while (len--)
-            *in++ = spi_transfer_byte(0);
+            *in++ = _spi_transfer_byte(0);
     } else {
         while (len--)
-            *in++ = spi_transfer_byte(*out++);
+            *in++ = _spi_transfer_byte(*out++);
     }
 }
 

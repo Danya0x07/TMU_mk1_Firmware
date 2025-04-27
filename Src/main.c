@@ -28,6 +28,7 @@
 #include "led.h"
 #include "display.h"
 #include "button.h"
+#include "radio.h"
 
 #include <sheduler.h>
 /* USER CODE END Includes */
@@ -67,8 +68,16 @@ static void UpdateTime(void)
     Display_UpdateTime(min, sec, ms);
 }
 
+static void UpdateLinkStatus(void)
+{
+    bool linkStart, linkFinish;
+    Radio_GetLinkStatus(&linkStart, &linkFinish);
+    Led_ShowLink(linkStart, linkFinish);
+}
+
 static struct ShedulerTask *const shedulerTasks[] = {
     &(struct ShedulerTask){.execute = UpdateTime, .period = 25, .enabled = true},
+    &(struct ShedulerTask){.execute = UpdateLinkStatus, .period = 100, .enabled = true},
     NULL
 };
 /* USER CODE END 0 */
@@ -125,7 +134,8 @@ int main(void)
   // Миллисекундный таймер заезда
   LL_TIM_EnableIT_UPDATE(TIM3);
 
-  Led_BlinkAlternate(3, 300);
+  Led_BlinkAlternate(3, 500);
+  Radio_Init();
   Display_ShowSplashScreen();
   Display_DrawTimeFrame();
   Timer_Reset();
@@ -137,22 +147,32 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-      Sheduler_SpinRegular(shedulerTasks);
+    Sheduler_SpinRegular(shedulerTasks);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
     if (Button_IsUpdateFlagSet()) {
-        HAL_Delay(5); // debounce
+        HAL_Delay(10); // debounce
         Button_ReadState();
 
         if (Button_HasBeenPressed(BTN_START)) {
             Timer_Start();
         }
         else if (Button_HasBeenPressed(BTN_STOP)) {
-            if (Timer_GetState() == TimerState_RUN)
+            TimerState timerState = Timer_GetState();
+            if (timerState == TimerState_RUN)
                 Timer_Stop();
-            else
+            else if (timerState == TimerState_HALT)
                 Timer_Reset();
+            else {
+                static int brightnessLevel = 0;
+
+                brightnessLevel++;
+                if (brightnessLevel > 4)
+                    brightnessLevel = 0;
+
+                LL_TIM_OC_SetCompareCH3(TIM2, 20 * (brightnessLevel + 1));
+            }
         }
         Button_ClearUpdateFlag();
         BUTTON_IRQ_ON();

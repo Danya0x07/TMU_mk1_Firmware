@@ -9,14 +9,18 @@
 #define IRQ_ON()    NVIC_EnableIRQ(TIM1_UP_IRQn)
 #define IRQ_OFF()   NVIC_DisableIRQ(TIM1_UP_IRQn)
 
+#define A_PIN   GPIO_PIN_11
+#define B_PIN   GPIO_PIN_12
+
 static inline void SetScanStep(uint_fast8_t step)
 {
-    LL_GPIO_SetOutputPin(LEDMX_A_GPIO_Port, LEDMX_A_Pin);
-    LL_GPIO_SetOutputPin(LEDMX_B_GPIO_Port, LEDMX_B_Pin);
+    uint32_t portValue = LL_GPIO_ReadOutputPort(LEDMX_A_GPIO_Port);
+    portValue |= A_PIN | B_PIN;
     if (step & 0b01)
-        LL_GPIO_ResetOutputPin(LEDMX_A_GPIO_Port, LEDMX_A_Pin);
+        portValue &= ~A_PIN;
     if (step & 0b10)
-        LL_GPIO_ResetOutputPin(LEDMX_B_GPIO_Port, LEDMX_B_Pin);
+        portValue &= ~B_PIN;
+    LL_GPIO_WriteOutputPort(LEDMX_A_GPIO_Port, portValue);
 }
 
 static inline void ShiftOutByte(uint8_t byte)

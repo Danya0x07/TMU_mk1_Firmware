@@ -25,6 +25,7 @@
 #include "p10matrix.h"
 #include "timer.h"
 #include "button.h"
+#include "radio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -200,6 +201,56 @@ void SysTick_Handler(void)
 /* For the available peripheral interrupt handler names,                      */
 /* please refer to the startup file (startup_stm32f1xx.s).                    */
 /******************************************************************************/
+
+/**
+  * @brief This function handles EXTI line4 interrupt.
+  */
+void EXTI4_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI4_IRQn 0 */
+
+  /* USER CODE END EXTI4_IRQn 0 */
+  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_4) != RESET)
+  {
+    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_4);
+    /* USER CODE BEGIN LL_EXTI_LINE_4 */
+    if (Radio_PacketReceived()) {
+        while (Radio_PacketPending()) {
+            RadioEvent event = Radio_ProcessPacket();
+
+            if (event == RadioEvent_START) {
+                Timer_Start();
+            }
+            else if (event == RadioEvent_FINISH) {
+                Timer_Stop();
+            }
+
+            TimerState timerState = Timer_GetState();
+            struct RadioResponse radioResponse;
+
+            switch (timerState) {
+                case TimerState_IDLE:
+                    radioResponse.code = RadioResponseCode_START;
+                    break;
+
+                case TimerState_RUN:
+                    radioResponse.code = RadioResponseCode_RUN;
+                    break;
+
+                case TimerState_HALT:
+                    radioResponse.code = RadioResponseCode_STOP;
+                    break;
+            }
+
+            Radio_WriteResponse(&radioResponse);
+        }
+    }
+    /* USER CODE END LL_EXTI_LINE_4 */
+  }
+  /* USER CODE BEGIN EXTI4_IRQn 1 */
+
+  /* USER CODE END EXTI4_IRQn 1 */
+}
 
 /**
   * @brief This function handles EXTI line[9:5] interrupts.

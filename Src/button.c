@@ -8,6 +8,7 @@ static bool updateFlag;
 void Button_Reset(void)
 {
     prevState = state = pressed = released = 0;
+    updateFlag = false;
 }
 
 void Button_ReadState(void)

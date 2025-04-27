@@ -38,7 +38,7 @@ void MX_TIM1_Init(void)
   LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM1);
 
   /* TIM1 interrupt Init */
-  NVIC_SetPriority(TIM1_UP_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
+  NVIC_SetPriority(TIM1_UP_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),1, 1));
   NVIC_EnableIRQ(TIM1_UP_IRQn);
 
   /* USER CODE BEGIN TIM1_Init 1 */
@@ -124,7 +124,7 @@ void MX_TIM3_Init(void)
   LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM3);
 
   /* TIM3 interrupt Init */
-  NVIC_SetPriority(TIM3_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
+  NVIC_SetPriority(TIM3_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 1));
   NVIC_EnableIRQ(TIM3_IRQn);
 
   /* USER CODE BEGIN TIM3_Init 1 */
