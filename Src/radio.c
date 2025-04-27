@@ -14,7 +14,7 @@ void Radio_Init(void)
     struct nrf24l01_rx_config config = {
 		.addr_size = NRF24L01_ADDRS_3BYTE,
 		.crc_mode  = NRF24L01_CRC_1BYTE,
-		.datarate  = NRF24L01_DATARATE_250KBPS,
+		.datarate  = NRF24L01_DATARATE_1MBPS,
 		.mode = NRF24L01_RX_MODE_DPL_ACK_PAYLOAD,
 		.en_irq = NRF24L01_IRQ_RX_DR,
 		.rf_channel = PROTOCOL_RADIO_CHANNEL,
