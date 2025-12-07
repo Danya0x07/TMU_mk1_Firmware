@@ -2,26 +2,19 @@
 #define _INC_RADIO_H
 
 #include <stdbool.h>
+#include "protocol.h"
 
 typedef enum {
-    RadioEvent_NOTHING,
-    RadioEvent_START,
-    RadioEvent_FINISH
-} RadioEvent;
-
-struct RadioResponse {
-    enum RadioResponseCode {
-        RadioResponseCode_START,
-        RadioResponseCode_RUN,
-        RadioResponseCode_STOP
-    } code;
-};
+    RadioCommStatus_OK,
+    RadioCommStatus_ESIZE,
+    RadioCommStatus_EPIPE
+} RadioCommStatus;
 
 void Radio_Init(void);
 bool Radio_PacketReceived(void);
 bool Radio_PacketPending(void);
 void Radio_GetLinkStatus(bool *linkStart, bool *linkFinish);
-RadioEvent Radio_ProcessPacket(void);
-void Radio_WriteResponse(const struct RadioResponse *response);
+RadioCommStatus Radio_ReadMessage(struct ProtocolMessage *message);
+void Radio_WriteResponse(const struct ProtocolMessage *response, bool overwrite);
 
 #endif // _INC_RADIO_H

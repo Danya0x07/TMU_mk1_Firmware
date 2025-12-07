@@ -53,68 +53,42 @@ void Radio_GetLinkStatus(bool *linkStart, bool *linkFinish)
     *linkFinish = HAL_GetTick() - lastMsgTimeFinish < LINK_TIMEOUT;
 }
 
-RadioEvent Radio_ProcessPacket(void)
+RadioCommStatus Radio_ReadMessage(struct ProtocolMessage *message)
 {
-    RadioEvent event = RadioEvent_NOTHING;
-
-    if (nrf24l01_read_pld_size() != sizeof(struct ProtocolMessageLTW)) {
+    if (nrf24l01_read_pld_size() != sizeof(struct ProtocolMessage)) {
         nrf24l01_flush_rx_fifo();
         nrf24l01_clear_interrupts(NRF24L01_IRQ_RX_DR);
-        //Led_BlinkStart(5, 100);
-        return RadioEvent_NOTHING;
+        return RadioCommStatus_ESIZE;
     }
 
-    struct ProtocolMessageLTW msgLTW;
     enum nrf24l01_pipe_number pipe = nrf24l01_rx_get_pld_pipe_no();
 
-    nrf24l01_read_pld(&msgLTW, sizeof(struct ProtocolMessageLTW));
+    nrf24l01_read_pld(message, sizeof(struct ProtocolMessage));
     nrf24l01_clear_interrupts(NRF24L01_IRQ_RX_DR);
 
     if (pipe == NRF24L01_PIPE0) {
-        static enum ProtocolStatusLTW prevStatus = ProtocolStatusLTW_ARMED;
-        enum ProtocolStatusLTW status = msgLTW.status;
-
-        if (status == ProtocolStatusLTW_DISARMED && prevStatus == ProtocolStatusLTW_ARMED) {
-            event = RadioEvent_START;
-        }
-        prevStatus = status;
         lastMsgTimeStart = HAL_GetTick();
     }
     else if (pipe == NRF24L01_PIPE1) {
-        static enum ProtocolStatusLTW prevStatus = ProtocolStatusLTW_DISARMED;
-        enum ProtocolStatusLTW status = msgLTW.status;
-
-        if (status == ProtocolStatusLTW_DISARMED && prevStatus == ProtocolStatusLTW_ARMED) {
-            event = RadioEvent_FINISH;
-        }
-        prevStatus = status;
         lastMsgTimeFinish = HAL_GetTick();
+    }
+    else {
+        nrf24l01_flush_rx_fifo();
+        return RadioCommStatus_EPIPE;
     }
     lastPipe = pipe;
 
-    return event;
+    return RadioCommStatus_OK;
 }
 
-void Radio_WriteResponse(const struct RadioResponse *response)
+void Radio_WriteResponse(const struct ProtocolMessage *response, bool overwrite)
 {
-    static const enum ProtocolCommandTMU START_CMDS[3] = {
-        [RadioResponseCode_START] = ProtocolCommandTMU_ARM,
-        [RadioResponseCode_RUN] = ProtocolCommandTMU_DISARM,
-        [RadioResponseCode_STOP] = ProtocolCommandTMU_DISARM
-    };
-    static const enum ProtocolCommandTMU FINISH_CMDS[3] = {
-        [RadioResponseCode_START] = ProtocolCommandTMU_DISARM,
-        [RadioResponseCode_RUN] = ProtocolCommandTMU_ARM,
-        [RadioResponseCode_STOP] = ProtocolCommandTMU_DISARM
-    };
-
-    if (lastPipe == NRF24L01_PIPE0 || lastPipe == NRF24L01_PIPE1) {
-        struct ProtocolMessageTMU msgTMU = {
-            .cmd = lastPipe == NRF24L01_PIPE0 ? START_CMDS[response->code] : FINISH_CMDS[response->code]
-        };
-        nrf24l01_rx_write_ack_pld(lastPipe, &msgTMU, sizeof(struct ProtocolMessageTMU));
+    if (overwrite) {
+        nrf24l01_flush_tx_fifo();
+        nrf24l01_rx_write_ack_pld(NRF24L01_PIPE0, response, sizeof(struct ProtocolMessage));
+        nrf24l01_rx_write_ack_pld(NRF24L01_PIPE1, response, sizeof(struct ProtocolMessage));
     }
-    else {
-        //Led_BlinkFinish(5, 100);
+    else if (lastPipe == NRF24L01_PIPE0 || lastPipe == NRF24L01_PIPE1) {
+        nrf24l01_rx_write_ack_pld(lastPipe, response, sizeof(struct ProtocolMessage));
     }
 }

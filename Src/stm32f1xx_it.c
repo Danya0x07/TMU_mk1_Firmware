@@ -216,33 +216,23 @@ void EXTI4_IRQHandler(void)
     /* USER CODE BEGIN LL_EXTI_LINE_4 */
     if (Radio_PacketReceived()) {
         while (Radio_PacketPending()) {
-            RadioEvent event = Radio_ProcessPacket();
+            struct ProtocolMessage message;
+            if (Radio_ReadMessage(&message) != RadioCommStatus_OK) {
+                break;
+            }
 
-            if (event == RadioEvent_START) {
+            TimerState requestedState = (TimerState)message.timerState;
+            TimerState currentState = Timer_GetState();
+
+            if (currentState == TimerState_IDLE && requestedState == TimerState_RUN) {
                 Timer_Start();
             }
-            else if (event == RadioEvent_FINISH) {
+            else if (currentState == TimerState_RUN && requestedState == TimerState_HALT) {
                 Timer_Stop();
             }
-
-            TimerState timerState = Timer_GetState();
-            struct RadioResponse radioResponse;
-
-            switch (timerState) {
-                case TimerState_IDLE:
-                    radioResponse.code = RadioResponseCode_START;
-                    break;
-
-                case TimerState_RUN:
-                    radioResponse.code = RadioResponseCode_RUN;
-                    break;
-
-                case TimerState_HALT:
-                    radioResponse.code = RadioResponseCode_STOP;
-                    break;
-            }
-
-            Radio_WriteResponse(&radioResponse);
+            TimerState newState = Timer_GetState();
+            struct ProtocolMessage response = {(uint8_t)newState};
+            Radio_WriteResponse(&response, newState != currentState);
         }
     }
     /* USER CODE END LL_EXTI_LINE_4 */
